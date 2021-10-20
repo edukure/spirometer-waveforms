@@ -8,10 +8,15 @@ export default (req, res) => {
 
   const file = fs.readFileSync(dir, 'utf8');
 
-  const data = file
+  const values = file
     .split('\n')
     .map((line) => parseFloat(line))
     .slice(0, -1);
+
+  const data = values.map((value, index) => ({
+    value,
+    index,
+  }));
 
   return res.status(200).json(data);
 };
