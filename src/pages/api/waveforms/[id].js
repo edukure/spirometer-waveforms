@@ -15,7 +15,7 @@ export default (req, res) => {
 
   const data = values.map((value, index) => ({
     value,
-    index,
+    index: index * 0.002,
   }));
 
   return res.status(200).json(data);

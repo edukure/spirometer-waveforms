@@ -1,54 +1,120 @@
-import {
-  Link as ChakraLink,
-  Text,
-  Code,
-  List,
-  ListIcon,
-  ListItem,
-} from '@chakra-ui/react'
-import { CheckCircleIcon, LinkIcon } from '@chakra-ui/icons'
-import { Hero } from '../components/Hero'
-import { Container } from '../components/Container'
-import { Main } from '../components/Main'
-import { DarkModeSwitch } from '../components/DarkModeSwitch'
-import { CTA } from '../components/CTA'
-import { Footer } from '../components/Footer'
+import { Box, Text } from '@chakra-ui/react';
+import { Container } from '../components/Container';
+import { Main } from '../components/Main';
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Global } from 'recharts';
+import { convertFlowToVolume, getPeak } from '../utils';
 
-const Index = () => (
-  <Container height="100vh">
-    <Hero />
-    <Main>
-      <Text>
-        Example repository of <Code>Next.js</Code> + <Code>chakra-ui</Code>.
-      </Text>
+Global.isSsr = true;
+const Index = ({ flow, peakFlow, volume }) => {
+  // const flowetData] = useState([]);
+  // const [peakFlow, setPeakFlow] = useState();
+  const [fev, setFev] = useState();
+  // const [volume, setVolume] = useState([]);
+  const [frv, setFrv] = useState([]);
 
-      <List spacing={3} my={0}>
-        <ListItem>
-          <ListIcon as={CheckCircleIcon} color="green.500" />
-          <ChakraLink
-            isExternal
-            href="https://chakra-ui.com"
-            flexGrow={1}
-            mr={2}
-          >
-            Chakra UI <LinkIcon />
-          </ChakraLink>
-        </ListItem>
-        <ListItem>
-          <ListIcon as={CheckCircleIcon} color="green.500" />
-          <ChakraLink isExternal href="https://nextjs.org" flexGrow={1} mr={2}>
-            Next.js <LinkIcon />
-          </ChakraLink>
-        </ListItem>
-      </List>
-    </Main>
+  console.log(flow);
 
-    <DarkModeSwitch />
-    <Footer>
-      <Text>Next ❤️ Chakra</Text>
-    </Footer>
-    <CTA />
-  </Container>
-)
+  return (
+    <Container height="100vh">
+      <Main>
+        <Box>
+          <Text>peak flow: {peakFlow ?? ''}</Text>
+          <Text>fev: {fev ?? ''}</Text>
+          {flow.length > 0 && (
+            <LineChart
+              width={500}
+              height={300}
+              data={flow}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="index"
+                interval={250}
+                tickFormatter={(x) => {
+                  return x.toFixed(1);
+                }}
+              />
+              <YAxis />
+              <Line
+                isAnimationActive={false}
+                type="monotone"
+                dataKey="value"
+                stroke="#82ca9d"
+                dot={false}
+              />
+            </LineChart>
+          )}
+          {volume.length > 0 && (
+            <LineChart
+              width={500}
+              height={300}
+              data={volume}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="index"
+                interval={250}
+                tickFormatter={(x) => {
+                  return x.toFixed(1);
+                }}
+              />
+              <YAxis />
+              <Line type="" dataKey="value" stroke="#82ca9d" dot={false} />
+            </LineChart>
+          )}
+          {frv.length > 0 && (
+            <LineChart
+              width={500}
+              height={300}
+              data={frv}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="volume" />
+              <YAxis />
+              <Line type="" dataKey="flow" stroke="#82ca9d" dot={false} />
+            </LineChart>
+          )}
+        </Box>
+      </Main>
+    </Container>
+  );
+};
 
-export default Index
+export default Index;
+
+export const getServerSideProps = async () => {
+  const response = await fetch('http://localhost:3000/api/waveforms/1');
+  const flow = await response.json();
+
+  const values = flow.map((d) => d.value);
+  const peakFlow = getPeak(values);
+  const volume = convertFlowToVolume(flow);
+  console.log(volume);
+
+  return {
+    props: {
+      flow,
+      peakFlow,
+      volume,
+    },
+  };
+};
