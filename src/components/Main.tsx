@@ -5,7 +5,7 @@ export const Main = (props) => (
     spacing="1.5rem"
     width="100%"
     maxWidth="48rem"
-    pt="8rem"
+    pt={8}
     px="1rem"
     {...props}
   />
